@@ -1,0 +1,7 @@
+docs/build/
+docs/images/
+docs/site/
+*.jl.cov
+*.jl.*.cov
+*.jl.mem
+deps/deps.jl

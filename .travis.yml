@@ -1,0 +1,16 @@
+language: julia
+os:
+  - linux
+  - osx
+julia:
+  - 0.6
+notifications:
+  email: false
+git:
+  depth: 99999999
+matrix:
+  allow_failures:
+  - julia: 0.6
+after_success:
+  - julia -e 'Pkg.add("Documenter")'
+  - julia -e 'cd(Pkg.dir("FPBH.jl")); include(joinpath("docs", "make.jl"))'
