@@ -7,10 +7,10 @@
 # for academic use, but restricting commercial firms from exploiting our      #
 # knowhow for their benefit. The precise terms and conditions for using,      #
 # copying, distribution, and modification follow. Permission is granted for   #
-# academic research use. The license expires as soon as you are no longer a   # 
+# academic research use. The license expires as soon as you are no longer a   #
 # member of an academic institution. For other uses, contact the authors for  #
 # licensing options. Every publication and presentation for which work based  #
-# on the Program or its output has been used must contain an appropriate      # 
+# on the Program or its output has been used must contain an appropriate      #
 # citation and acknowledgment of the authors of the Program.                  #
 #                                                                             #
 # The above copyright notice and this permission notice shall be included in  #
@@ -28,10 +28,27 @@
 
 module FPBH
 
-using Modof, JuMP, MathProgBase, GLPKMathProgInterface, DataStructures
+using Clp
+using DataStructures
+using Distributed
+using GLPK
+using JuMP
+using LinearAlgebra
+using Random
+using Statistics
 
+include("solver_adapter.jl")
+const MathProgBase = MathProgBaseCompat
+
+include("core_types.jl")
+include("core_utils.jl")
 include("Overall_Algorithm.jl")
 
 export fpbh, warmup_fpbh
+export BOBPInstance, BOLPInstance, BOMBLPInstance
+export MOBPInstance, MOLPInstance, MOMBLPInstance
+export BOPSolution, MOPSolution
+export wrap_sols_into_array, write_nondominated_frontier, write_nondominated_sols
+export has_modof
 
 end

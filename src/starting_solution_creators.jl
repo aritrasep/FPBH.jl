@@ -42,7 +42,7 @@ end
 ### General Version for any Solver using MathProgBase             ###
 #####################################################################
 
-@inbounds function lex_min{T<:Number}(c1::Vector{T}, c2::Vector{T}, model::MathProgBase.AbstractMathProgModel)
+@inbounds function lex_min(c1::Vector{T}, c2::Vector{T}, model::MathProgBase.AbstractMathProgModel) where {T<:Number}
     MathProgBase.setobj!(model, c1)
     MathProgBase.optimize!(model)
     try
@@ -83,7 +83,7 @@ end
     if length(non_dom_sols) <= 1
         return non_dom_sols
     end
-    blocks_to_explore = Queue(Vector{Int64})
+    blocks_to_explore = Queue{Vector{Int64}}()
     enqueue!(blocks_to_explore, [1,2])
     count = 2
     model = MathProgBase.LinearQuadraticModel(solver)
@@ -158,8 +158,9 @@ end
     end
     if num - length(non_dom_sols) >= 1
         p = size(instance.c)[1]
-        λ = unique(abs.(randn(num-length(non_dom_sols), p)),1)
-        λ = λ ./ [sum(λ[i,:]) for i in 1:size(λ)[1]]
+        λ = unique(abs.(randn(num-length(non_dom_sols), p)); dims=1)
+        λ_row_sum = [sum(λ[i, :]) for i in 1:size(λ, 1)]
+        λ = λ ./ reshape(λ_row_sum, :, 1)
         model = MathProgBase.LinearQuadraticModel(solver)
         MathProgBase.loadproblem!(model, instance.A, instance.v_lb, instance.v_ub, instance.c[1, :], instance.cons_lb, instance.cons_ub, :Min)
         for i in 1:size(λ)[1]
@@ -173,7 +174,7 @@ end
             MathProgBase.setobj!(model, tmp)
             MathProgBase.optimize!(model)
             try
-                current_solution = CPLEX.get_solution(model)
+                current_solution = MathProgBase.getsolution(model)
                 tmp2 = MOPSolution(vars=current_solution)
                 compute_objective_function_value!(tmp2, instance)
                 push!(non_dom_sols, tmp2)
@@ -194,7 +195,7 @@ end
         p = size(instance.c)[1]
     end
     m, n = size(instance.A)
-    num = n>=m?n:m
+    num = n >= m ? n : m
     num = ceil(Int64, minimum([convert(Int64, (10/p)*ceil(log2(num)/log2(p))), convert(Int64, 100/p)]))
     generate_starting_solutions_for_fph(instance, params[:solver], num, params[:timelimit])
 end

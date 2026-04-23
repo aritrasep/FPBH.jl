@@ -58,10 +58,10 @@
         MathProgBase.loadproblem!(model, instance.A, zeros(size(instance.A)[2]), ones(size(instance.A)[2]), obj, instance.cons_lb, instance.cons_ub, :Min)
         inds = findn(lhs)
         try
-            MathProgBase.addconstr!(model, inds, lhs[inds], float(k_min+1) - sum(starting_solutions[i].vars[bin_var_ind]), float(k_max) - sum(starting_solutions[i].vars[bin_var_ind]))
+            MathProgBase.addconstr!(model, inds, lhs[inds], Float64(k_min+1) - sum(starting_solutions[i].vars[bin_var_ind]), Float64(k_max) - sum(starting_solutions[i].vars[bin_var_ind]))
         catch
-            MathProgBase.addconstr!(model, inds, lhs[inds], -Inf, float(k_max) - sum(starting_solutions[i].vars[bin_var_ind]))
-            MathProgBase.addconstr!(model, inds, lhs[inds], float(k_min+1) - sum(starting_solutions[i].vars[bin_var_ind]), Inf)
+            MathProgBase.addconstr!(model, inds, lhs[inds], -Inf, Float64(k_max) - sum(starting_solutions[i].vars[bin_var_ind]))
+            MathProgBase.addconstr!(model, inds, lhs[inds], Float64(k_min+1) - sum(starting_solutions[i].vars[bin_var_ind]), Inf)
         end
         MathProgBase.optimize!(model)
         try
@@ -144,7 +144,12 @@ end
 #####################################################################
 
 @inbounds function Parallel_K_OPT(instance::Union{MOLPInstance, BOLPInstance}, bin_var_ind::Vector{Int64}, starting_solutions::Union{Vector{MOPSolution}, Vector{BOPSolution}}, params)
-    procs_ = setdiff(procs(), myid())[1:params[:total_threads]]
+    procs_ = workers()
+    if length(procs_) < params[:total_threads]
+        @warn "Requested $(params[:total_threads]) distributed workers, but only $(length(procs_)) are available. Falling back to serial K-OPT."
+        return K_OPT(instance, bin_var_ind, starting_solutions, params)
+    end
+    procs_ = procs_[1:params[:total_threads]]
     inds = Vector{Int64}[]
     for i in 1:params[:total_threads]
         if i < params[:total_threads]
@@ -154,9 +159,9 @@ end
         end
     end
     if typeof(instance) == MOLPInstance
-        non_dom_sols = Vector{Vector{MOPSolution}}(params[:total_threads])
+        non_dom_sols = Vector{Vector{MOPSolution}}(undef, params[:total_threads])
     else
-        non_dom_sols = Vector{Vector{BOPSolution}}(params[:total_threads])
+        non_dom_sols = Vector{Vector{BOPSolution}}(undef, params[:total_threads])
     end
     @sync begin
         for i in 1:params[:total_threads]

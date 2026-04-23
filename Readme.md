@@ -1,7 +1,7 @@
 # FPBH: A Feasibility Pump based Heuristic for Multi-objective Mixed Integer Linear Programming #
 
 **Build Status:** 
-[![Build Status](https://travis-ci.org/aritrasep/FPBH.jl.svg?branch=master)](https://travis-ci.org/aritrasep/FPBH.jl)
+[![CI](https://github.com/aritrasep/FPBH.jl/actions/workflows/ci.yml/badge.svg)](https://github.com/aritrasep/FPBH.jl/actions/workflows/ci.yml)
 
 **Documentation:**
 [![](https://img.shields.io/badge/docs-stable-blue.svg)](https://aritrasep.github.io/FPBH.jl/docs/build/)
@@ -10,6 +10,8 @@
 [![DOI](https://zenodo.org/badge/84245385.svg)](https://zenodo.org/badge/latestdoi/84245385)
 
 This is a LP based heuristic for computing an approximate nondominated frontier of a Multi-objective Mixed Integer Linear Program. Important characteristics of this heuristic are:
+
+FPBH targets **Julia 1.10+** and uses modern JuMP/MathOptInterface-compatible LP optimizers.
 
 1. Can solve any (both structured and unstructured) multiobjective mixed integer linear problem. The following problem classes are supported:
     1. Objectives: 2 or more linear objectives
@@ -24,9 +26,9 @@ This is a LP based heuristic for computing an approximate nondominated frontier 
     2. LP file format
     3. MPS file format
     4. Matrix Format ( Advanced )
-3. **Any linear programming solver supported by MathProgBase.jl can be used. No mixed integer programming solver is required**. [FPBH.jl](https://github.com/aritrasep/FPBH.jl) automatically installs [GLPK](https://github.com/JuliaOpt/GLPKMathProgInterface.jl) and [Clp](https://github.com/JuliaOpt/Clp.jl) by default. If the user desires to use any other LP solver, it must be separately installed. [FPBH.jl](https://github.com/aritrasep/FPBH.jl) has been successfully tested with:
-    1. [GLPK - v4.61](https://github.com/JuliaOpt/GLPKMathProgInterface.jl)
-    2. [Clp - v1.16](https://github.com/JuliaOpt/Clp.jl)
+3. **Any linear programming solver supported by MathOptInterface (MOI) can be used. No mixed integer programming solver is required**. [FPBH.jl](https://github.com/aritrasep/FPBH.jl) has first-phase tested support for:
+    1. [GLPK.jl](https://github.com/jump-dev/GLPK.jl)
+    2. [Clp.jl](https://github.com/jump-dev/Clp.jl)
     3. [SCIP - v4.0.0](https://github.com/SCIP-Interfaces/SCIP.jl)
     4. [Gurobi - v7.5](https://github.com/JuliaOpt/Gurobi.jl)
     5. [CPLEX - v12.7](https://github.com/JuliaOpt/CPLEX.jl). If [CPLEX](https://github.com/JuliaOpt/CPLEX.jl) is available, we highly recommend using [FPBHCPLEX.jl](https://github.com/aritrasep/FPBHCPLEX.jl) instead.
