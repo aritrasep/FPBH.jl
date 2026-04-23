@@ -5,15 +5,15 @@
 To use multiple processors for solving an instance, start `julia` with the requisite number of workers. For example: if you want to use at most `4 workers` start `julia` as `julia -p 4`, followed by either of the following three commands in the terminal depending on the input format chosen:
 
 ```julia
-@time solutions = fpbh(model, lp_solver=ClpSolver(), timelimit=10.0, threads=4)
+@time solutions = fpbh(model, lp_solver=Clp.Optimizer, timelimit=10.0, threads=4)
 ```
 
 ```julia
-@time solutions = fpbh("Test.lp", [:Max, :Min], lp_solver=ClpSolver(), timelimit=10.0, threads=4)
+@time solutions = fpbh("Test.lp", [:Max, :Min], lp_solver=Clp.Optimizer, timelimit=10.0, threads=4)
 ```
 
 ```julia
-@time solutions = fpbh("Test.mps", [:Max, :Min], lp_solver=ClpSolver(), timelimit=10.0, threads=4)
+@time solutions = fpbh("Test.mps", [:Max, :Min], lp_solver=Clp.Optimizer, timelimit=10.0, threads=4)
 ```
 
 ## Tuning parameters ##

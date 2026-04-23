@@ -123,7 +123,12 @@ end
     pts_to_explore = [[Inf, Inf]]
     non_dom_sols = BOPSolution[]
     sols_to_explore = BOPSolution[]
-    procs_ = setdiff(procs(), myid())[1:params[:total_threads]]
+    procs_ = workers()
+    if length(procs_) < params[:total_threads]
+        @warn "Requested $(params[:total_threads]) distributed workers, but only $(length(procs_)) are available. Falling back to serial decomposition."
+        return modified_perpendicular_search_method(instance, bin_var_ind, params)
+    end
+    procs_ = procs_[1:params[:total_threads]]
     timelimit = params[:timelimit]
     tmp = fill(BOPSolution[], length(procs_))
     while length(pts_to_explore) >= 1 && time()-t0 <= timelimit
@@ -323,7 +328,12 @@ end
     pts_to_explore = [fill(Inf, size(instance.c)[1])]
     non_dom_sols = MOPSolution[]
     sols_to_explore = MOPSolution[]
-    procs_ = setdiff(procs(), myid())[1:params[:total_threads]]
+    procs_ = workers()
+    if length(procs_) < params[:total_threads]
+        @warn "Requested $(params[:total_threads]) distributed workers, but only $(length(procs_)) are available. Falling back to serial decomposition."
+        return modified_full_p_split_method(instance, bin_var_ind, params)
+    end
+    procs_ = procs_[1:params[:total_threads]]
     timelimit = params[:timelimit]
     tmp = fill(MOPSolution[], length(procs_))
     while length(pts_to_explore) >= 1 && time()-t0 <= timelimit

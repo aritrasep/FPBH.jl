@@ -1,0 +1,6 @@
+[deps]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+FPBH = "f17f77ac-0a3e-4de8-9d82-0a3c9cb5f7d7"
+GLPK = "60bf3e95-4087-53dc-ae20-288a0d20c6a6"
+Clp = "e2554f3b-3117-50c0-817c-e040a3ddf72d"
+JuMP = "4076af6c-e467-56ae-b986-b466b2749572"

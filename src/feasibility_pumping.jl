@@ -33,7 +33,7 @@
 @inbounds function generate_integer_starting_solutions_for_fph(current_vars::Vector{Int64}, strt_sol::Vector{Float64}, tabu_list::Vector{Vector{Int64}})
     status = true
     tmp = zeros(length(strt_sol))
-    tmp[current_vars] = 1.0
+    tmp[current_vars] .= 1.0
     diff = abs.(tmp-strt_sol)
     sorting_list = zeros(length(diff), 2)
     sorting_list[:, 1], sorting_list[:, 2] = diff, collect(1:length(diff))
@@ -53,7 +53,7 @@
         return (vars_to_return, status)
     end
     tmp = zeros(length(strt_sol))
-    tmp[current_vars] = 1.0
+    tmp[current_vars] .= 1.0
     iterations = 1
     iteration_limit = size(sorting_list)[1]
     while iterations <= iteration_limit
@@ -113,7 +113,7 @@ end
         end
         tmp = tmp/norm(tmp)
         obj_coeffs = zeros(size(instance.A)[2])
-        obj_coeffs[bin_var_ind] = 1.0
+        obj_coeffs[bin_var_ind] .= 1.0
         obj_coeffs[bin_var_ind[current_bin_vars]] = -1.0
         obj_coeffs = (1.0-α)*obj_coeffs + α*tmp
         MathProgBase.setobj!(model, obj_coeffs)
@@ -199,7 +199,7 @@ end
         end
         tmp = tmp/norm(tmp)
         obj_coeffs = ones(length(strt_sol))
-        obj_coeffs[current_bin_vars] = -1.0
+        obj_coeffs[current_bin_vars] .= -1.0
         obj_coeffs = (1.0-α)*obj_coeffs + α*tmp
         MathProgBase.setobj!(model, obj_coeffs)
         MathProgBase.optimize!(model)
@@ -283,7 +283,7 @@ end
             break
         end
         obj_coeffs = zeros(size(instance.A)[2])
-        obj_coeffs[bin_var_ind] = 1.0
+        obj_coeffs[bin_var_ind] .= 1.0
         obj_coeffs[bin_var_ind[current_bin_vars]] = -1.0
         MathProgBase.setobj!(model, obj_coeffs)
         MathProgBase.optimize!(model)
@@ -339,7 +339,7 @@ end
             break
         end
         obj_coeffs = ones(length(strt_sol))
-        obj_coeffs[current_bin_vars] = -1.0
+        obj_coeffs[current_bin_vars] .= -1.0
         MathProgBase.setobj!(model, obj_coeffs)
         MathProgBase.optimize!(model)
         try
