@@ -1,7 +1,7 @@
 name = "FPBH"
 uuid = "f17f77ac-0a3e-4de8-9d82-0a3c9cb5f7d7"
-authors = ["Aritra Pal", "Hadi Charkhgard", "FPBH contributors"]
 version = "1.1.0"
+authors = ["Aritra Pal", "Hadi Charkhgard", "FPBH contributors"]
 
 [deps]
 Clp = "e2554f3b-3117-50c0-817c-e040a3ddf72d"
@@ -12,10 +12,14 @@ GLPK = "60bf3e95-4087-53dc-ae20-288a0d20c6a6"
 JuMP = "4076af6c-e467-56ae-b986-b466b2749572"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 MathOptInterface = "b8f27783-ece8-5eb3-8dc8-9495eed66fee"
+Modof = "f25fa5c0-d930-461b-ae93-6173de358a6c"
 Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
+
+[sources]
+Modof = {path = "../Modof.jl"}
 
 [compat]
 Clp = "1"
