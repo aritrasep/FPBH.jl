@@ -17,6 +17,8 @@ jobs:
         with:
           version: ${{ matrix.julia-version }}
       - uses: julia-actions/cache@v2
+      - name: Develop Modof
+        run: julia --project=. -e 'using Pkg; Pkg.develop(PackageSpec(url="https://github.com/rahulptel/Modof.jl"))'
       - name: Instantiate
         run: julia --project=. -e 'using Pkg; Pkg.instantiate()'
       - name: Run tests
