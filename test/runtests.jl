@@ -11,7 +11,11 @@ using JuMP
     cons_lb = [-Inf]
     cons_ub = [3.0]
 
-    inst_bi = BOBPInstance(A, c1, c2, cons_lb, cons_ub)
+    inst_bi = if FPBH.has_modof()
+        BOBPInstance(c1, c2, A, cons_lb, cons_ub)
+    else
+        BOBPInstance(A, c1, c2, cons_lb, cons_ub)
+    end
 
     @testset "Biobjective binary path" begin
         sols_glpk = fpbh(
@@ -53,7 +57,11 @@ using JuMP
 
     @testset "Multiobjective binary path" begin
         c = [1.0 1.0 1.0 1.0; 2.0 1.0 3.0 1.0; 1.5 0.5 0.2 4.0]
-        inst_multi = MOBPInstance(A, c, cons_lb, cons_ub)
+        inst_multi = if FPBH.has_modof()
+            MOBPInstance(c, A, cons_lb, cons_ub)
+        else
+            MOBPInstance(A, c, cons_lb, cons_ub)
+        end
         sols = fpbh(
             inst_multi;
             lp_solver = GLPK.Optimizer,

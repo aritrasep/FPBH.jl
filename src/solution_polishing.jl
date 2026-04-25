@@ -30,6 +30,13 @@
 # Solution Poilishing using K-OPT                                   #
 #####################################################################
 
+@inbounds function empty_solution_vector(instance::Union{MOLPInstance, BOLPInstance})
+    if typeof(instance) == MOLPInstance
+        return MOPSolution[]
+    end
+    return BOPSolution[]
+end
+
 @inbounds function generating_starting_solutions_for_k_opt(instance::Union{MOLPInstance, BOLPInstance}, bin_var_ind::Vector{Int64}, starting_solutions::Union{Vector{MOPSolution}, Vector{BOPSolution}}, k_max::Int64, k_min::Int64, params)
     t0 = time()
     if typeof(instance) == MOLPInstance
@@ -174,9 +181,19 @@ end
 end
 
 @inbounds function SOL_POL(instance::Union{MOLPInstance, BOLPInstance}, bin_var_ind::Vector{Int64}, starting_solutions::Union{Vector{MOPSolution}, Vector{BOPSolution}}, params)
+    if isempty(starting_solutions)
+        return starting_solutions
+    end
     if params[:total_threads] == 1 && !params[:parallelism]
         K_OPT(instance, bin_var_ind, starting_solutions, params)
     else
         Parallel_K_OPT(instance, bin_var_ind, sort_non_dom_sols(starting_solutions), params)
     end
+end
+
+@inbounds function SOL_POL(instance::Union{MOLPInstance, BOLPInstance}, bin_var_ind::Vector{Int64}, starting_solutions::Vector, params)
+    if isempty(starting_solutions)
+        return empty_solution_vector(instance)
+    end
+    throw(ArgumentError("solution polishing expected BOPSolution or MOPSolution values, got $(typeof(starting_solutions))"))
 end
