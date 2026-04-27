@@ -44,6 +44,16 @@ if _MODOF_AVAILABLE
     check_dominance(args...) = Modof.check_dominance(args...)
     check_feasibility(args...) = Modof.check_feasibility(args...)
 
+    function wrap_sols_into_array(sols::Vector{BOPSolution})
+        isempty(sols) && return zeros(0, 2)
+        Modof.wrap_sols_into_array(sols)
+    end
+
+    function wrap_sols_into_array(sols::Vector{MOPSolution})
+        isempty(sols) && return zeros(0, 0)
+        Modof.wrap_sols_into_array(sols)
+    end
+
     wrap_sols_into_array(args...) = Modof.wrap_sols_into_array(args...)
     write_nondominated_frontier(args...) = Modof.write_nondominated_frontier(args...)
     write_nondominated_sols(args...) = Modof.write_nondominated_sols(args...)
@@ -357,4 +367,3 @@ else
         return
     end
 end
-
