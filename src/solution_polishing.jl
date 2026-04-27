@@ -61,18 +61,17 @@ end
                 lhs[j] = 1.0
             end
         end
-        model = MathProgBase.LinearQuadraticModel(params[:solver])
-        MathProgBase.loadproblem!(model, instance.A, zeros(size(instance.A)[2]), ones(size(instance.A)[2]), obj, instance.cons_lb, instance.cons_ub, :Min)
+        model = build_lp_model(params[:solver], instance.A, zeros(size(instance.A)[2]), ones(size(instance.A)[2]), obj, instance.cons_lb, instance.cons_ub, :Min)
         inds = findn(lhs)
         try
-            MathProgBase.addconstr!(model, inds, lhs[inds], Float64(k_min+1) - sum(starting_solutions[i].vars[bin_var_ind]), Float64(k_max) - sum(starting_solutions[i].vars[bin_var_ind]))
+            add_lp_constraint!(model, inds, lhs[inds], Float64(k_min+1) - sum(starting_solutions[i].vars[bin_var_ind]), Float64(k_max) - sum(starting_solutions[i].vars[bin_var_ind]))
         catch
-            MathProgBase.addconstr!(model, inds, lhs[inds], -Inf, Float64(k_max) - sum(starting_solutions[i].vars[bin_var_ind]))
-            MathProgBase.addconstr!(model, inds, lhs[inds], Float64(k_min+1) - sum(starting_solutions[i].vars[bin_var_ind]), Inf)
+            add_lp_constraint!(model, inds, lhs[inds], -Inf, Float64(k_max) - sum(starting_solutions[i].vars[bin_var_ind]))
+            add_lp_constraint!(model, inds, lhs[inds], Float64(k_min+1) - sum(starting_solutions[i].vars[bin_var_ind]), Inf)
         end
-        MathProgBase.optimize!(model)
+        optimize_lp!(model)
         try
-            tmp = MathProgBase.getsolution(model)
+            tmp = lp_solution(model)
             if typeof(starting_solutions[1]) == MOPSolution
                 tmp2 = MOPSolution(vars=tmp)
             end
@@ -92,15 +91,14 @@ end
     t0 = time()
     sols_to_explore, non_dom_sols = starting_solutions, starting_solutions
     sols_to_explore = sols_to_explore[shuffle([1:length(sols_to_explore)...])]
-    model = MathProgBase.LinearQuadraticModel(params[:solver])
     if typeof(instance) == MOLPInstance
         tmp = MOPSolution[]
         p = size(instance.c)[1]
-        MathProgBase.loadproblem!(model, instance.A, zeros(size(instance.A)[2]), ones(size(instance.A)[2]), instance.c[1, :], instance.cons_lb, instance.cons_ub, :Min)
+        model = build_lp_model(params[:solver], instance.A, zeros(size(instance.A)[2]), ones(size(instance.A)[2]), instance.c[1, :], instance.cons_lb, instance.cons_ub, :Min)
     else
         tmp = BOPSolution[]
         p = 2
-        MathProgBase.loadproblem!(model, instance.A, zeros(size(instance.A)[2]), ones(size(instance.A)[2]), instance.c1, instance.cons_lb, instance.cons_ub, :Min)
+        model = build_lp_model(params[:solver], instance.A, zeros(size(instance.A)[2]), ones(size(instance.A)[2]), instance.c1, instance.cons_lb, instance.cons_ub, :Min)
     end
     timelimit = params[:timelimit]
     while length(sols_to_explore) >= 1 && (time()-t0) <= params[:timelimit]
@@ -123,7 +121,7 @@ end
         end
     end
     params[:timelimit] = timelimit
-    [non_dom_sols..., tmp...]
+    vcat(non_dom_sols, tmp)
 end
 
 @inbounds function K_OPT(instance::Union{MOLPInstance, BOLPInstance}, bin_var_ind::Vector{Int64}, starting_solutions::Union{Vector{MOPSolution}, Vector{BOPSolution}}, params)

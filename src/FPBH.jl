@@ -28,20 +28,18 @@
 
 module FPBH
 
-using Clp
 using DataStructures
 using Distributed
 using GLPK
 using JuMP
 using LinearAlgebra
+import MathOptInterface as MOI
 using Random
 using Statistics
 
-include("solver_adapter.jl")
-const MathProgBase = MathProgBaseCompat
-
 include("core_types.jl")
 include("core_utils.jl")
+include("LinearProgramming.jl")
 include("Overall_Algorithm.jl")
 
 export fpbh, warmup_fpbh

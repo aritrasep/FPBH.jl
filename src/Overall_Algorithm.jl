@@ -61,7 +61,7 @@ include("solution_polishing.jl")
     params[:parallelism] = parallelism
     params[:timelimit] = timelimit
     params[:time_ratio] = time_ratio
-    params[:solver] = MathProgBase.normalize_solver(lp_solver)
+    params[:solver] = lp_solver
     
     instance2, bin_var_ind = lprelaxation(instance)
     timelimit = params[:timelimit]
