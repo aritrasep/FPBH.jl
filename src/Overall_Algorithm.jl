@@ -44,11 +44,11 @@ include("solution_polishing.jl")
 ### Multiobjective Mixed Binary Programs                                    ###
 ###############################################################################
 
-@inbounds function fpbh(instance::Union{BOBPInstance, BOMBLPInstance, MOBPInstance, MOMBLPInstance}; lp_solver::MathProgBase.SolverInterface.AbstractMathProgSolver=GLPKSolverLP(), obj_fph::Bool=true, local_search::Bool = true, decomposition::Bool=true, solution_polishing::Bool=true, threads::Int64=1, parallelism::Bool=false, timelimit::Float64=120.0, time_ratio::Float64=2/3)
+@inbounds function fpbh(instance::Union{BOBPInstance, BOMBLPInstance, MOBPInstance, MOMBLPInstance}; lp_solver=GLPK.Optimizer, obj_fph::Bool=true, local_search::Bool = true, decomposition::Bool=true, solution_polishing::Bool=true, threads::Int64=1, parallelism::Bool=false, timelimit::Float64=120.0, time_ratio::Float64=2/3)
     t0 = time()
     
     println("---------------------------------------------------------")
-    println("                         FPBH v1.0")
+    println("                         FPBH v1.1")
     println("        Copyright (c) Aritra Pal, Hadi Charkhgard")
     println("---------------------------------------------------------")
     
@@ -92,7 +92,7 @@ include("solution_polishing.jl")
     select_and_sort_non_dom_sols(non_dom_sols)
 end
 
-@inbounds function fpbh(instance::Union{BOIPInstance, BOMILPInstance, MOIPInstance, MOMILPInstance}; ub::Float64=1.0e5, lp_solver::MathProgBase.SolverInterface.AbstractMathProgSolver=GLPKSolverLP(), obj_fph::Bool=true, local_search::Bool = true, decomposition::Bool=true, solution_polishing::Bool=true, threads::Int64=1, parallelism::Bool=false, timelimit::Float64=120.0, time_ratio::Float64=2/3)
+@inbounds function fpbh(instance::Union{BOIPInstance, BOMILPInstance, MOIPInstance, MOMILPInstance}; ub::Float64=1.0e5, lp_solver=GLPK.Optimizer, obj_fph::Bool=true, local_search::Bool = true, decomposition::Bool=true, solution_polishing::Bool=true, threads::Int64=1, parallelism::Bool=false, timelimit::Float64=120.0, time_ratio::Float64=2/3)
     t0 = time()
     instance2, pos = convert_ip_into_bp(instance, ub)
     solutions = fpbh(instance2, lp_solver=lp_solver, obj_fph=obj_fph, local_search=local_search, decomposition=decomposition, solution_polishing=solution_polishing, threads=threads, parallelism=parallelism, timelimit=timelimit - (time() - t0), time_ratio=time_ratio)
@@ -103,7 +103,7 @@ end
 # Wrappers for JuMP Model                                                     #
 ###############################################################################
 
-@inbounds function fpbh(model::JuMP.Model; ub::Float64=1.0e5, lp_solver::MathProgBase.SolverInterface.AbstractMathProgSolver=GLPKSolverLP(), obj_fph::Bool=true, local_search::Bool = true, decomposition::Bool=true, solution_polishing::Bool=true, threads::Int64=1, parallelism::Bool=false, timelimit::Float64=120.0, time_ratio::Float64=2/3, num::Int64=100)
+@inbounds function fpbh(model::JuMP.Model; ub::Float64=1.0e5, lp_solver=GLPK.Optimizer, obj_fph::Bool=true, local_search::Bool = true, decomposition::Bool=true, solution_polishing::Bool=true, threads::Int64=1, parallelism::Bool=false, timelimit::Float64=120.0, time_ratio::Float64=2/3, num::Int64=100)
     t0 = time()
     instance, sense = read_an_instance_from_a_jump_model(model)
     if typeof(instance) in [BOLPInstance, MOLPInstance]
@@ -138,7 +138,7 @@ end
 # Wrappers for LP and MPS File formats                                        #
 ###############################################################################
 
-@inbounds function fpbh(filename::String, sense::Vector{Symbol}; ub::Float64=1.0e5, lp_solver::MathProgBase.SolverInterface.AbstractMathProgSolver=GLPKSolverLP(), obj_fph::Bool=true, local_search::Bool = true, decomposition::Bool=true, solution_polishing::Bool=true, threads::Int64=1, parallelism::Bool=false, timelimit::Float64=120.0, time_ratio::Float64=2/3, num::Int64=100)
+@inbounds function fpbh(filename::String, sense::Vector{Symbol}; ub::Float64=1.0e5, lp_solver=GLPK.Optimizer, obj_fph::Bool=true, local_search::Bool = true, decomposition::Bool=true, solution_polishing::Bool=true, threads::Int64=1, parallelism::Bool=false, timelimit::Float64=120.0, time_ratio::Float64=2/3, num::Int64=100)
     t0 = time()
     instance, sense = read_an_instance_from_a_lp_or_a_mps_file(filename, sense)
     if typeof(instance) in [BOLPInstance, MOLPInstance]
@@ -169,7 +169,10 @@ end
 # Warming Up FPBH                                                             #
 ###############################################################################
 
-@inbounds function warmup_fpbh(;lp_solver::MathProgBase.SolverInterface.AbstractMathProgSolver=GLPKSolverLP(), threads::Int64=1)
+@inbounds function warmup_fpbh(;lp_solver=GLPK.Optimizer, threads::Int64=1)
+    if !has_modof()
+        throw(ArgumentError("warmup_fpbh requires Modof.jl for ModoModel/objective! support."))
+    end
     model = ModoModel()
     @variable(model, x[1:4] >= 0.0, Int)
     objective!(model, 1, :Min, x[1] + x[2] + x[3] + x[4])

@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        julia-version: ['1.10', '1.11', '1.12']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: ${{ matrix.julia-version }}
+      - uses: julia-actions/cache@v2
+      - name: Develop Modof for Julia 1.10
+        if: ${{ matrix.julia-version == '1.10' }}
+        run: julia --project=. -e 'using Pkg; Pkg.develop(PackageSpec(url="https://github.com/rahulptel/Modof.jl"))'
+      - name: Instantiate
+        run: julia --project=. -e 'using Pkg; Pkg.instantiate()'
+      - name: Run tests
+        run: julia --project=. -e 'using Pkg; Pkg.test()'

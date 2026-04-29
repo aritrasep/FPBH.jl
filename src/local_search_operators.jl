@@ -53,7 +53,7 @@
             push!(unique_bin_vars, starting_solutions[i].vars[bin_var_ind])
         end
     end
-    num = minimum([ceil((10/p)*ceil(log2(n>=m?n:m)/log2(p))), ceil(100/p)])
+    num = minimum([ceil((10/p)*ceil(log2(n >= m ? n : m)/log2(p))), ceil(100/p)])
     for i in 1:length(unique_bin_vars)
         if time()-t0 > params[:timelimit]
             break

@@ -30,6 +30,13 @@
 # Solution Poilishing using K-OPT                                   #
 #####################################################################
 
+@inbounds function empty_solution_vector(instance::Union{MOLPInstance, BOLPInstance})
+    if typeof(instance) == MOLPInstance
+        return MOPSolution[]
+    end
+    return BOPSolution[]
+end
+
 @inbounds function generating_starting_solutions_for_k_opt(instance::Union{MOLPInstance, BOLPInstance}, bin_var_ind::Vector{Int64}, starting_solutions::Union{Vector{MOPSolution}, Vector{BOPSolution}}, k_max::Int64, k_min::Int64, params)
     t0 = time()
     if typeof(instance) == MOLPInstance
@@ -54,18 +61,17 @@
                 lhs[j] = 1.0
             end
         end
-        model = MathProgBase.LinearQuadraticModel(params[:solver])
-        MathProgBase.loadproblem!(model, instance.A, zeros(size(instance.A)[2]), ones(size(instance.A)[2]), obj, instance.cons_lb, instance.cons_ub, :Min)
+        model = build_lp_model(params[:solver], instance.A, zeros(size(instance.A)[2]), ones(size(instance.A)[2]), obj, instance.cons_lb, instance.cons_ub, :Min)
         inds = findn(lhs)
         try
-            MathProgBase.addconstr!(model, inds, lhs[inds], float(k_min+1) - sum(starting_solutions[i].vars[bin_var_ind]), float(k_max) - sum(starting_solutions[i].vars[bin_var_ind]))
+            add_lp_constraint!(model, inds, lhs[inds], Float64(k_min+1) - sum(starting_solutions[i].vars[bin_var_ind]), Float64(k_max) - sum(starting_solutions[i].vars[bin_var_ind]))
         catch
-            MathProgBase.addconstr!(model, inds, lhs[inds], -Inf, float(k_max) - sum(starting_solutions[i].vars[bin_var_ind]))
-            MathProgBase.addconstr!(model, inds, lhs[inds], float(k_min+1) - sum(starting_solutions[i].vars[bin_var_ind]), Inf)
+            add_lp_constraint!(model, inds, lhs[inds], -Inf, Float64(k_max) - sum(starting_solutions[i].vars[bin_var_ind]))
+            add_lp_constraint!(model, inds, lhs[inds], Float64(k_min+1) - sum(starting_solutions[i].vars[bin_var_ind]), Inf)
         end
-        MathProgBase.optimize!(model)
+        optimize_lp!(model)
         try
-            tmp = MathProgBase.getsolution(model)
+            tmp = lp_solution(model)
             if typeof(starting_solutions[1]) == MOPSolution
                 tmp2 = MOPSolution(vars=tmp)
             end
@@ -85,15 +91,14 @@ end
     t0 = time()
     sols_to_explore, non_dom_sols = starting_solutions, starting_solutions
     sols_to_explore = sols_to_explore[shuffle([1:length(sols_to_explore)...])]
-    model = MathProgBase.LinearQuadraticModel(params[:solver])
     if typeof(instance) == MOLPInstance
         tmp = MOPSolution[]
         p = size(instance.c)[1]
-        MathProgBase.loadproblem!(model, instance.A, zeros(size(instance.A)[2]), ones(size(instance.A)[2]), instance.c[1, :], instance.cons_lb, instance.cons_ub, :Min)
+        model = build_lp_model(params[:solver], instance.A, zeros(size(instance.A)[2]), ones(size(instance.A)[2]), instance.c[1, :], instance.cons_lb, instance.cons_ub, :Min)
     else
         tmp = BOPSolution[]
         p = 2
-        MathProgBase.loadproblem!(model, instance.A, zeros(size(instance.A)[2]), ones(size(instance.A)[2]), instance.c1, instance.cons_lb, instance.cons_ub, :Min)
+        model = build_lp_model(params[:solver], instance.A, zeros(size(instance.A)[2]), ones(size(instance.A)[2]), instance.c1, instance.cons_lb, instance.cons_ub, :Min)
     end
     timelimit = params[:timelimit]
     while length(sols_to_explore) >= 1 && (time()-t0) <= params[:timelimit]
@@ -116,7 +121,7 @@ end
         end
     end
     params[:timelimit] = timelimit
-    [non_dom_sols..., tmp...]
+    vcat(non_dom_sols, tmp)
 end
 
 @inbounds function K_OPT(instance::Union{MOLPInstance, BOLPInstance}, bin_var_ind::Vector{Int64}, starting_solutions::Union{Vector{MOPSolution}, Vector{BOPSolution}}, params)
@@ -144,7 +149,12 @@ end
 #####################################################################
 
 @inbounds function Parallel_K_OPT(instance::Union{MOLPInstance, BOLPInstance}, bin_var_ind::Vector{Int64}, starting_solutions::Union{Vector{MOPSolution}, Vector{BOPSolution}}, params)
-    procs_ = setdiff(procs(), myid())[1:params[:total_threads]]
+    procs_ = workers()
+    if length(procs_) < params[:total_threads]
+        @warn "Requested $(params[:total_threads]) distributed workers, but only $(length(procs_)) are available. Falling back to serial K-OPT."
+        return K_OPT(instance, bin_var_ind, starting_solutions, params)
+    end
+    procs_ = procs_[1:params[:total_threads]]
     inds = Vector{Int64}[]
     for i in 1:params[:total_threads]
         if i < params[:total_threads]
@@ -154,9 +164,9 @@ end
         end
     end
     if typeof(instance) == MOLPInstance
-        non_dom_sols = Vector{Vector{MOPSolution}}(params[:total_threads])
+        non_dom_sols = Vector{Vector{MOPSolution}}(undef, params[:total_threads])
     else
-        non_dom_sols = Vector{Vector{BOPSolution}}(params[:total_threads])
+        non_dom_sols = Vector{Vector{BOPSolution}}(undef, params[:total_threads])
     end
     @sync begin
         for i in 1:params[:total_threads]
@@ -169,9 +179,19 @@ end
 end
 
 @inbounds function SOL_POL(instance::Union{MOLPInstance, BOLPInstance}, bin_var_ind::Vector{Int64}, starting_solutions::Union{Vector{MOPSolution}, Vector{BOPSolution}}, params)
+    if isempty(starting_solutions)
+        return starting_solutions
+    end
     if params[:total_threads] == 1 && !params[:parallelism]
         K_OPT(instance, bin_var_ind, starting_solutions, params)
     else
         Parallel_K_OPT(instance, bin_var_ind, sort_non_dom_sols(starting_solutions), params)
     end
+end
+
+@inbounds function SOL_POL(instance::Union{MOLPInstance, BOLPInstance}, bin_var_ind::Vector{Int64}, starting_solutions::Vector, params)
+    if isempty(starting_solutions)
+        return empty_solution_vector(instance)
+    end
+    throw(ArgumentError("solution polishing expected BOPSolution or MOPSolution values, got $(typeof(starting_solutions))"))
 end

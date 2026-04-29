@@ -11,7 +11,7 @@ instance, true_frontier = read_boap_hadi(10)
 ```
 
 ```julia
-@time solutions = fpbh(instance, lp_solver=ClpSolver(), timelimit=10.0)
+@time solutions = fpbh(instance, lp_solver=Clp.Optimizer, timelimit=10.0)
 ```
 
 ```julia
@@ -57,7 +57,7 @@ instance, true_frontier = read_bokp_xavier1("2KP150-1A")
 ```
 
 ```julia
-@time solutions = fpbh(instance, lp_solver=ClpSolver(), timelimit=10.0)
+@time solutions = fpbh(instance, lp_solver=Clp.Optimizer, timelimit=10.0)
 ```
 
 ```julia
@@ -79,7 +79,7 @@ instance, true_frontier = read_bokp_hadi(1)
 ```
 
 ```julia
-@time solutions = fpbh(instance, lp_solver=ClpSolver(), timelimit=10.0)
+@time solutions = fpbh(instance, lp_solver=Clp.Optimizer, timelimit=10.0)
 ```
 
 ```julia
@@ -101,7 +101,7 @@ instance, true_frontier = read_boscp_xavier(100, 10, "a")
 ```
 
 ```julia
-@time solutions = fpbh(instance, lp_solver=ClpSolver(), timelimit=10.0)
+@time solutions = fpbh(instance, lp_solver=Clp.Optimizer, timelimit=10.0)
 ```
 
 ```julia
@@ -123,7 +123,7 @@ instance, true_frontier = read_bospp_xavier("2mis100_300A")
 ```
 
 ```julia
-@time solutions = fpbh(instance, lp_solver=ClpSolver(), timelimit=10.0)
+@time solutions = fpbh(instance, lp_solver=Clp.Optimizer, timelimit=10.0)
 ```
 
 ```julia
@@ -145,7 +145,7 @@ instance, true_frontier = read_bomip_hadi(6)
 ```
 
 ```julia
-@time solutions = fpbh(instance, lp_solver=ClpSolver(), timelimit=10.0)
+@time solutions = fpbh(instance, lp_solver=Clp.Optimizer, timelimit=10.0)
 ```
 
 ```julia
@@ -191,7 +191,7 @@ instance, true_frontier = read_bouflp_hadi(12)
 ```
 
 ```julia
-@time solutions = fpbh(instance, lp_solver=ClpSolver(), timelimit=10.0)
+@time solutions = fpbh(instance, lp_solver=Clp.Optimizer, timelimit=10.0)
 ```
 
 ```julia
@@ -213,7 +213,7 @@ instance, true_frontier = read_moap_kirlik(3, 5, 1)
 ```
 
 ```julia
-@time solutions = fpbh(instance, lp_solver=ClpSolver(), timelimit=10.0)
+@time solutions = fpbh(instance, lp_solver=Clp.Optimizer, timelimit=10.0)
 ```
 
 ```julia
@@ -259,7 +259,7 @@ instance, true_frontier = read_mokp_kirlik(3, 10, 1)
 ```
 
 ```julia
-@time solutions = fpbh(instance, lp_solver=ClpSolver(), timelimit=10.0)
+@time solutions = fpbh(instance, lp_solver=Clp.Optimizer, timelimit=10.0)
 ```
 
 ```julia
@@ -281,7 +281,7 @@ instance, true_frontier = read_mombp_aritra(3, 320, 1)
 ```
 
 ```julia
-@time solutions = fpbh(instance, lp_solver=ClpSolver(), timelimit=10.0)
+@time solutions = fpbh(instance, lp_solver=Clp.Optimizer, timelimit=10.0)
 ```
 
 ```julia

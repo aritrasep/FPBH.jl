@@ -33,7 +33,7 @@
 @inbounds function generate_integer_starting_solutions_for_fph(current_vars::Vector{Int64}, strt_sol::Vector{Float64}, tabu_list::Vector{Vector{Int64}})
     status = true
     tmp = zeros(length(strt_sol))
-    tmp[current_vars] = 1.0
+    tmp[current_vars] .= 1.0
     diff = abs.(tmp-strt_sol)
     sorting_list = zeros(length(diff), 2)
     sorting_list[:, 1], sorting_list[:, 2] = diff, collect(1:length(diff))
@@ -53,14 +53,14 @@
         return (vars_to_return, status)
     end
     tmp = zeros(length(strt_sol))
-    tmp[current_vars] = 1.0
+    tmp[current_vars] .= 1.0
     iterations = 1
     iteration_limit = size(sorting_list)[1]
     while iterations <= iteration_limit
         tmp2 = tmp
         #inds_to_flip = unique(rand(1:size(sorting_list)[1], rand(round(Int64, (size(sorting_list)[1]/4)):round(Int64, 3*(size(sorting_list)[1]/4)),1)[1]))
         inds_to_flip = unique(rand(1:size(sorting_list)[1], rand(round(Int64, (size(sorting_list)[1]/2)):(size(sorting_list)[1]-1),1)[1]))
-        tmp2[inds_to_flip] = 1-tmp2[inds_to_flip]
+        tmp2[inds_to_flip] .= 1 .- tmp2[inds_to_flip]
         iterations += 1
         if findn(tmp2) in tabu_list
             continue
@@ -81,16 +81,16 @@ end
 #####################################################################
 
 #####################################################################
-## General Version for any Solver through MathProgBase for BOMIP   ##
+## General Version for any JuMP/MOI-compatible solver for BOMIP   ##
 #####################################################################
 
 #####################################################################
 ### Mixed Binary Programs                                         ###
 #####################################################################
 
-@inbounds function objective_feasibility_pump(instance::Union{MOLPInstance, BOLPInstance}, model::MathProgBase.AbstractMathProgModel, bin_var_ind::Vector{Int64}, starting_solution::Union{MOPSolution, BOPSolution}, tabu_list::Vector{Vector{Int64}}, α::Float64)
+@inbounds function objective_feasibility_pump(instance::Union{MOLPInstance, BOLPInstance}, model::LPModel, bin_var_ind::Vector{Int64}, starting_solution::Union{MOPSolution, BOPSolution}, tabu_list::Vector{Vector{Int64}}, α::Float64)
     iterations = 0
-    iteration_limit = round(Int64, sqrt(maximum([MathProgBase.numvar(model), MathProgBase.numconstr(model)])))
+    iteration_limit = round(Int64, sqrt(maximum([lp_variable_count(model), lp_constraint_count(model)])))
     strt_sol = starting_solution.vars
     current_bin_vars = Int64[]
     obj_coeffs = Float64[]
@@ -111,15 +111,16 @@ end
         else
             tmp = instance.c1 + instance.c2
         end
-        tmp = tmp/norm(tmp)
+        tmp_norm = norm(tmp)
+        tmp = iszero(tmp_norm) ? zeros(length(tmp)) : tmp / tmp_norm
         obj_coeffs = zeros(size(instance.A)[2])
-        obj_coeffs[bin_var_ind] = 1.0
-        obj_coeffs[bin_var_ind[current_bin_vars]] = -1.0
+        obj_coeffs[bin_var_ind] .= 1.0
+        obj_coeffs[bin_var_ind[current_bin_vars]] .= -1.0
         obj_coeffs = (1.0-α)*obj_coeffs + α*tmp
-        MathProgBase.setobj!(model, obj_coeffs)
-        MathProgBase.optimize!(model)
+        set_lp_objective!(model, obj_coeffs)
+        optimize_lp!(model)
         try
-            strt_sol = MathProgBase.getsolution(model)
+            strt_sol = lp_solution(model)
         catch
             break
         end
@@ -150,7 +151,7 @@ end
     end
 end
 
-@inbounds function objective_feasibility_pump(instance::Union{MOLPInstance, BOLPInstance}, model::MathProgBase.AbstractMathProgModel, bin_var_ind::Vector{Int64}, starting_solution::Union{MOPSolution, BOPSolution}, tabu_list::Vector{Vector{Int64}})
+@inbounds function objective_feasibility_pump(instance::Union{MOLPInstance, BOLPInstance}, model::LPModel, bin_var_ind::Vector{Int64}, starting_solution::Union{MOPSolution, BOPSolution}, tabu_list::Vector{Vector{Int64}})
     if typeof(instance) == MOLPInstance
         p = size(instance.c)[1]
         sols = MOPSolution[]
@@ -174,9 +175,9 @@ end
 ### Pure Binary Programs                                          ###
 #####################################################################
 
-@inbounds function objective_feasibility_pump(instance::Union{MOLPInstance, BOLPInstance}, model::MathProgBase.AbstractMathProgModel, starting_solution::Union{MOPSolution, BOPSolution}, tabu_list::Vector{Vector{Int64}}, α::Float64)
+@inbounds function objective_feasibility_pump(instance::Union{MOLPInstance, BOLPInstance}, model::LPModel, starting_solution::Union{MOPSolution, BOPSolution}, tabu_list::Vector{Vector{Int64}}, α::Float64)
     iterations = 0
-    iteration_limit = round(Int64, sqrt(maximum([MathProgBase.numvar(model), MathProgBase.numconstr(model)])))
+    iteration_limit = round(Int64, sqrt(maximum([lp_variable_count(model), lp_constraint_count(model)])))
     strt_sol = starting_solution.vars
     current_bin_vars = Int64[]
     obj_coeffs = Float64[]
@@ -197,14 +198,15 @@ end
         else
             tmp = instance.c1 + instance.c2
         end
-        tmp = tmp/norm(tmp)
+        tmp_norm = norm(tmp)
+        tmp = iszero(tmp_norm) ? zeros(length(tmp)) : tmp / tmp_norm
         obj_coeffs = ones(length(strt_sol))
-        obj_coeffs[current_bin_vars] = -1.0
+        obj_coeffs[current_bin_vars] .= -1.0
         obj_coeffs = (1.0-α)*obj_coeffs + α*tmp
-        MathProgBase.setobj!(model, obj_coeffs)
-        MathProgBase.optimize!(model)
+        set_lp_objective!(model, obj_coeffs)
+        optimize_lp!(model)
         try
-            strt_sol = MathProgBase.getsolution(model)
+            strt_sol = lp_solution(model)
         catch
             break
         end
@@ -235,7 +237,7 @@ end
     end
 end
 
-@inbounds function objective_feasibility_pump(instance::Union{MOLPInstance, BOLPInstance}, model::MathProgBase.AbstractMathProgModel, starting_solution::Union{MOPSolution, BOPSolution}, tabu_list::Vector{Vector{Int64}})
+@inbounds function objective_feasibility_pump(instance::Union{MOLPInstance, BOLPInstance}, model::LPModel, starting_solution::Union{MOPSolution, BOPSolution}, tabu_list::Vector{Vector{Int64}})
     if typeof(instance) == MOLPInstance
         p = size(instance.c)[1]
         sols = MOPSolution[]
@@ -260,16 +262,16 @@ end
 #####################################################################
 
 #####################################################################
-## General Version for any Solver through MathProgBase for BOMIP   ##
+## General Version for any JuMP/MOI-compatible solver for BOMIP   ##
 #####################################################################
 
 #####################################################################
 ### Mixed Binary Programs                                         ###
 #####################################################################
 
-@inbounds function feasibility_pump(instance::Union{MOLPInstance, BOLPInstance}, model::MathProgBase.AbstractMathProgModel, bin_var_ind::Vector{Int64}, starting_solution::Union{MOPSolution, BOPSolution}, tabu_list::Vector{Vector{Int64}})
+@inbounds function feasibility_pump(instance::Union{MOLPInstance, BOLPInstance}, model::LPModel, bin_var_ind::Vector{Int64}, starting_solution::Union{MOPSolution, BOPSolution}, tabu_list::Vector{Vector{Int64}})
     iterations = 0
-    iteration_limit = round(Int64, sqrt(maximum([MathProgBase.numvar(model), MathProgBase.numconstr(model)])))
+    iteration_limit = round(Int64, sqrt(maximum([lp_variable_count(model), lp_constraint_count(model)])))
     strt_sol = starting_solution.vars
     current_bin_vars = Int64[]
     obj_coeffs = Float64[]
@@ -283,12 +285,12 @@ end
             break
         end
         obj_coeffs = zeros(size(instance.A)[2])
-        obj_coeffs[bin_var_ind] = 1.0
-        obj_coeffs[bin_var_ind[current_bin_vars]] = -1.0
-        MathProgBase.setobj!(model, obj_coeffs)
-        MathProgBase.optimize!(model)
+        obj_coeffs[bin_var_ind] .= 1.0
+        obj_coeffs[bin_var_ind[current_bin_vars]] .= -1.0
+        set_lp_objective!(model, obj_coeffs)
+        optimize_lp!(model)
         try
-            strt_sol = MathProgBase.getsolution(model)
+            strt_sol = lp_solution(model)
         catch
             break
         end
@@ -323,9 +325,9 @@ end
 ### Pure Binary Programs                                          ###
 #####################################################################
 
-@inbounds function feasibility_pump(instance::Union{MOLPInstance, BOLPInstance}, model::MathProgBase.AbstractMathProgModel, starting_solution::Union{MOPSolution, BOPSolution}, tabu_list::Vector{Vector{Int64}})
+@inbounds function feasibility_pump(instance::Union{MOLPInstance, BOLPInstance}, model::LPModel, starting_solution::Union{MOPSolution, BOPSolution}, tabu_list::Vector{Vector{Int64}})
     iterations = 0
-    iteration_limit = round(Int64, sqrt(maximum([MathProgBase.numvar(model), MathProgBase.numconstr(model)])))
+    iteration_limit = round(Int64, sqrt(maximum([lp_variable_count(model), lp_constraint_count(model)])))
     strt_sol = starting_solution.vars
     current_bin_vars = Int64[]
     obj_coeffs = Float64[]
@@ -339,11 +341,11 @@ end
             break
         end
         obj_coeffs = ones(length(strt_sol))
-        obj_coeffs[current_bin_vars] = -1.0
-        MathProgBase.setobj!(model, obj_coeffs)
-        MathProgBase.optimize!(model)
+        obj_coeffs[current_bin_vars] .= -1.0
+        set_lp_objective!(model, obj_coeffs)
+        optimize_lp!(model)
         try
-            strt_sol = MathProgBase.getsolution(model)
+            strt_sol = lp_solution(model)
         catch
             break
         end
@@ -378,7 +380,7 @@ end
 ## Defining different versions of FPH using Multiple Dispatch      ##
 #####################################################################
 
-@inbounds function FPH(instance::Union{MOLPInstance, BOLPInstance}, model::MathProgBase.AbstractMathProgModel, bin_var_ind::Vector{Int64}, starting_solutions::Union{Vector{MOPSolution}, Vector{BOPSolution}}, params)
+@inbounds function FPH(instance::Union{MOLPInstance, BOLPInstance}, model::LPModel, bin_var_ind::Vector{Int64}, starting_solutions::Union{Vector{MOPSolution}, Vector{BOPSolution}}, params)
     t0 = time()
     if typeof(instance) == MOLPInstance
         sols = MOPSolution[]
@@ -410,7 +412,7 @@ end
     select_non_dom_sols(sols)
 end
 
-@inbounds function FPH(instance::Union{MOLPInstance, BOLPInstance}, model::MathProgBase.AbstractMathProgModel, starting_solutions::Union{Vector{MOPSolution}, Vector{BOPSolution}}, params)
+@inbounds function FPH(instance::Union{MOLPInstance, BOLPInstance}, model::LPModel, starting_solutions::Union{Vector{MOPSolution}, Vector{BOPSolution}}, params)
     t0 = time()
     if typeof(instance) == MOLPInstance
         sols = MOPSolution[]
@@ -455,12 +457,11 @@ end
             return BOPSolution[]
         end
     end
-    model = MathProgBase.LinearQuadraticModel(params[:solver])
     if typeof(instance) == MOLPInstance
-        MathProgBase.loadproblem!(model, instance.A, zeros(size(instance.A)[2]), ones(size(instance.A)[2]), instance.c[1, :], instance.cons_lb, instance.cons_ub, :Min)
+        model = build_lp_model(params[:solver], instance.A, zeros(size(instance.A)[2]), ones(size(instance.A)[2]), instance.c[1, :], instance.cons_lb, instance.cons_ub, :Min)
     end
     if typeof(instance) == BOLPInstance
-        MathProgBase.loadproblem!(model, instance.A, zeros(size(instance.A)[2]), ones(size(instance.A)[2]), instance.c1, instance.cons_lb, instance.cons_ub, :Min)
+        model = build_lp_model(params[:solver], instance.A, zeros(size(instance.A)[2]), ones(size(instance.A)[2]), instance.c1, instance.cons_lb, instance.cons_ub, :Min)
     end
     params[:timelimit] = timelimit - time() + t0
     if length(bin_var_ind) == size(instance.A)[2]

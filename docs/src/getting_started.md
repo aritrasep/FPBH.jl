@@ -1,8 +1,10 @@
 # Getting Started #
 
 ```julia
-using Modof, JuMP, FPBH, GLPKMathProgInterface, Clp
+using Modof, JuMP, FPBH, GLPK, Clp
 ```
+
+`ModoModel`-based examples require `Modof.jl`. If `Modof.jl` is not available, use FPBH's instance-based APIs.
 
 ## Warm Up FPBH: ##
 
@@ -11,7 +13,7 @@ using Modof, JuMP, FPBH, GLPKMathProgInterface, Clp
 ### Using Clp as the underlying LP Solver to warm up FPBH ###
 
 ```julia
-warmup_fpbh(lp_solver=ClpSolver(), threads=1)
+warmup_fpbh(lp_solver=Clp.Optimizer, threads=1)
 ```
 
 ## Using JuMP Extension: ##
@@ -99,7 +101,7 @@ plt_discrete_non_dom_frntr([nondominated_frontier], ["FPBH(GLPK)"], false, "Plot
 ### Using CLP instead of GLPK as the underlying LP Solver, and imposing a maximum timelimit of 10.0 seconds ###
 
 ```julia
-@time solutions = fpbh(model, lp_solver=ClpSolver(), timelimit=10.0)
+@time solutions = fpbh(model, lp_solver=Clp.Optimizer, timelimit=10.0)
 ```
 
 ## Using LP File Format ##
@@ -141,7 +143,7 @@ The sense of the first objective function is automatically detected from the LP 
 ### Using CLP instead of GLPK as the underlying LP Solver, and imposing a maximum timelimit of 10.0 seconds ###
 
 ```julia
-@time solutions = fpbh("Test.lp", [:Max, :Min], lp_solver=ClpSolver(), timelimit=10.0)
+@time solutions = fpbh("Test.lp", [:Max, :Min], lp_solver=Clp.Optimizer, timelimit=10.0)
 ```
 
 ## Using MPS File Format ##
@@ -207,7 +209,7 @@ The sense of the first objective function is automatically detected from the MPS
 ### Using CLP instead of GLPK as the underlying LP Solver, and imposing a maximum timelimit of 10.0 seconds ###
 
 ```julia
-@time solutions = fpbh("Test.mps", [:Max, :Min], lp_solver=ClpSolver(), timelimit=10.0)
+@time solutions = fpbh("Test.mps", [:Max, :Min], lp_solver=Clp.Optimizer, timelimit=10.0)
 ```
 
 ## Using the Matrix Format - Advanced ##
